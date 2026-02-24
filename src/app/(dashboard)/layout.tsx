@@ -15,7 +15,11 @@ export default async function DashboardLayout({
     const data = await getOrCreateCurrentUser();
     org = data.org;
     userDisplayName = data.user.name ?? data.user.email ?? "User";
-  } catch {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "";
+    if (message.includes("No organization") || message.includes("organization")) {
+      redirect("/create-organization");
+    }
     redirect("/sign-in");
   }
 
