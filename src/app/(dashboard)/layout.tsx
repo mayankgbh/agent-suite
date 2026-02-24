@@ -17,7 +17,7 @@ export default async function DashboardLayout({
     userDisplayName = data.user.name ?? data.user.email ?? "User";
   } catch (err) {
     const message = err instanceof Error ? err.message : "";
-    if (message.includes("No organization") || message.includes("organization")) {
+    if (message.includes("No organization selected")) {
       redirect("/create-organization");
     }
     redirect("/sign-in");
