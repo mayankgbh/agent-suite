@@ -16,14 +16,15 @@ export default async function DashboardLayout({
     org = data.org;
     userDisplayName = data.user.name ?? data.user.email ?? "User";
   } catch (err) {
-    const message = err instanceof Error ? err.message : "";
+    const message = err instanceof Error ? err.message : String(err);
     if (message.includes("No organization selected")) {
       redirect("/create-organization");
     }
     if (message.includes("Unauthorized")) {
       redirect("/sign-in");
     }
-    redirect("/error?reason=setup");
+    const safeMessage = encodeURIComponent(message.slice(0, 200));
+    redirect(`/error?reason=setup&message=${safeMessage}`);
   }
 
   const onboardingComplete = org.onboarding_status === "complete";
