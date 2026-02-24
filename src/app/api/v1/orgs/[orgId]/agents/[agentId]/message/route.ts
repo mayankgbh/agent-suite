@@ -5,6 +5,16 @@ import { sendMessageBodySchema } from "@/lib/agents/message-validate";
 import { getAgentDefinition } from "@/agents/registry";
 import { buildSystemPrompt } from "@/engine/context-builder";
 import { runConversationTurn } from "@/engine/conversation-handler";
+import { getTierFromBudgetCents } from "@/lib/agent-tier";
+import {
+  getCurrentUsage,
+  recordUsage,
+  ensureUsageReset,
+} from "@/lib/agent-usage";
+import {
+  getRecentCoordination,
+  formatCoordinationSummary,
+} from "@/lib/coordination";
 
 export async function POST(
   req: Request,
@@ -23,6 +33,14 @@ export async function POST(
     const [agent, organization] = await Promise.all([
       prisma.agent.findFirst({
         where: { id: agentId, org_id: orgId },
+        select: {
+          id: true,
+          agent_type: true,
+          context_snapshot: true,
+          monthly_budget_cents: true,
+          token_usage_current_month: true,
+          token_usage_reset_at: true,
+        },
       }),
       prisma.organization.findUniqueOrThrow({
         where: { id: orgId },
@@ -44,12 +62,20 @@ export async function POST(
         ? (contextSnapshot.onboardingAnswers as Record<string, string>)
         : undefined;
 
+    const coordinationRows = await getRecentCoordination(prisma, orgId, {
+      forAgentId: agentId,
+      excludeFromAgentId: agentId,
+      limit: 15,
+    });
+    const coordinationSummary = formatCoordinationSummary(coordinationRows);
+
     const systemPrompt = buildSystemPrompt({
       companyName: organization.name,
       companyContext,
       agentDefinition: definition,
       contextSnapshot,
       onboardingAnswers,
+      coordinationSummary,
     });
 
     const recentMessages = await prisma.agentMessage.findMany({
@@ -77,13 +103,36 @@ export async function POST(
       },
     });
 
-    const { content: assistantContent } = await runConversationTurn({
+    const tier = getTierFromBudgetCents(agent.monthly_budget_cents);
+    await ensureUsageReset(prisma, agentId);
+    const currentUsage = await getCurrentUsage(prisma, agentId);
+    if (currentUsage >= tier.maxTokensPerMonth) {
+      return NextResponse.json(
+        {
+          error:
+            "Monthly token limit reached. Increase this agent’s monthly budget to continue.",
+        },
+        { status: 429 }
+      );
+    }
+
+    const { content: assistantContent, usage } = await runConversationTurn({
       systemPrompt,
       messages: conversationMessages,
       allowedTools: definition.allowedTools,
       agentId,
       orgId,
+      model: tier.model,
+      maxTokens: Math.min(
+        tier.maxTokensPerRequest,
+        tier.maxTokensPerMonth - currentUsage
+      ),
     });
+
+    const totalTokens = (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0);
+    if (totalTokens > 0) {
+      await recordUsage(prisma, agentId, totalTokens);
+    }
 
     const assistantMessage = await prisma.agentMessage.create({
       data: {

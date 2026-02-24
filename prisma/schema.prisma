@@ -126,6 +126,8 @@ model Organization {
   agent_messages     AgentMessage[]
   daily_reports      DailyReport[]
   events             Event[]
+  agent_files        AgentFile[]
+  coordination_messages CoordinationMessage[]
 }
 
 model User {
@@ -144,17 +146,21 @@ model User {
 }
 
 model Agent {
-  id                    String       @id @default(uuid())
-  org_id                String
-  agent_type            AgentType
-  display_name          String
-  status                AgentStatus  @default(onboarding)
-  personality_config    Json?
-  context_snapshot      Json?        // what the agent "knows" about the business
-  system_prompt_override String?     @db.Text
-  created_at            DateTime     @default(now())
-  activated_at          DateTime?
-  updated_at            DateTime     @updatedAt
+  id                      String       @id @default(uuid())
+  org_id                  String
+  agent_type              AgentType
+  display_name            String
+  status                  AgentStatus  @default(onboarding)
+  personality_config      Json?
+  context_snapshot        Json?        // what the agent "knows" about the business
+  system_prompt_override  String?      @db.Text
+  monthly_budget_cents    Int?         // e.g. 999 = $9.99/mo → dictates model + token limit
+  token_usage_current_month Int        @default(0)
+  token_usage_reset_at    DateTime?    // start of current billing month
+  last_execution_at       DateTime?    // last proactive run (for scheduling)
+  created_at              DateTime     @default(now())
+  activated_at            DateTime?
+  updated_at              DateTime     @updatedAt
 
   organization   Organization   @relation(fields: [org_id], references: [id], onDelete: Cascade)
   okrs           OKR[]
@@ -162,9 +168,55 @@ model Agent {
   agent_messages AgentMessage[]
   daily_reports  DailyReport[]
   events         Event[]
+  agent_memories AgentMemory[]
+  agent_files    AgentFile[]
+  coordination_outbound CoordinationMessage[] @relation("CoordinationFrom")
 
   @@index([org_id])
   @@index([org_id, status])
+}
+
+model CoordinationMessage {
+  id           String   @id @default(uuid())
+  org_id       String
+  from_agent_id String
+  to_agent_ids String?  // JSON array of agent ids, or null = broadcast to all in org
+  content      String   @db.Text
+  intent       String?  // e.g. "working_on", "blocked", "completed"
+  created_at   DateTime @default(now())
+
+  from_agent Agent  @relation("CoordinationFrom", fields: [from_agent_id], references: [id], onDelete: Cascade)
+  org       Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  @@index([org_id])
+  @@index([from_agent_id])
+  @@index([created_at])
+}
+
+model AgentMemory {
+  id         String   @id @default(uuid())
+  agent_id   String
+  key        String   // namespace + key for lookups
+  value      String   @db.Text
+  updated_at DateTime @updatedAt
+
+  agent Agent @relation(fields: [agent_id], references: [id], onDelete: Cascade)
+  @@unique([agent_id, key])
+  @@index([agent_id])
+}
+
+model AgentFile {
+  id         String   @id @default(uuid())
+  agent_id   String
+  org_id     String
+  path       String   // relative path, sandboxed (no ..)
+  content    String   @db.Text
+  updated_at DateTime @updatedAt
+
+  agent Agent @relation(fields: [agent_id], references: [id], onDelete: Cascade)
+  org   Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  @@unique([agent_id, path])
+  @@index([agent_id])
+  @@index([org_id])
 }
 
 model OKR {

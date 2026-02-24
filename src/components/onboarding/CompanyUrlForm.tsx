@@ -55,8 +55,8 @@ export function CompanyUrlForm({
             <Label htmlFor="website_url">Website URL</Label>
             <Input
               id="website_url"
-              type="url"
-              placeholder="https://example.com"
+              type="text"
+              placeholder="example.com or https://example.com"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               disabled={loading}

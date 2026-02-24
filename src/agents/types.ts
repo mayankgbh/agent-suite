@@ -29,13 +29,25 @@ export interface ExecutionStrategy {
 
 export type ToolType =
   | "web_scraper"
+  | "web_search"
   | "email_sender"
   | "seo_analyzer"
   | "content_generator"
   | "social_poster"
   | "analytics_reader"
   | "google_sheets"
-  | "slack_notifier";
+  | "slack_notifier"
+  | "memory_store"
+  | "memory_get"
+  | "read_file"
+  | "write_file"
+  | "metrics_record"
+  | "github_list_issues"
+  | "github_create_issue"
+  | "currency_convert"
+  | "calendar"
+  | "crm_lookup"
+  | "post_coordination_message";
 
 export interface AgentTypeDefinition {
   type: AgentType;

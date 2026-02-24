@@ -12,6 +12,7 @@ export function AgentDetailTabs({ agentId }: { agentId: string }) {
     { href: `${base}/okrs`, label: "OKRs" },
     { href: `${base}/tasks`, label: "Tasks" },
     { href: `${base}/reports`, label: "Reports" },
+    { href: `${base}/settings`, label: "Settings" },
   ];
 
   return (

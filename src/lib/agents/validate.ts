@@ -12,6 +12,7 @@ export const updateAgentBodySchema = z.object({
   status: z.enum(["onboarding", "active", "paused", "archived"]).optional(),
   personality_config: z.record(z.string(), z.unknown()).nullable().optional(),
   system_prompt_override: z.string().max(10000).nullable().optional(),
+  monthly_budget_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
 });
 
 export type UpdateAgentBody = z.infer<typeof updateAgentBodySchema>;

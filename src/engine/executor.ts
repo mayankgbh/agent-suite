@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { getAgentDefinition } from "@/agents/registry";
 import { planTasksFromOKR } from "./planner";
+import { postCoordination } from "@/lib/coordination";
 
 /**
  * Execute one cycle for an agent: ensure accepted OKRs have tasks, optionally update OKR status.
@@ -15,6 +16,13 @@ export async function execute(agentId: string, prisma: PrismaClient): Promise<vo
   if (!agent || agent.status === "archived" || agent.status === "paused") {
     return;
   }
+
+  await postCoordination(prisma, {
+    org_id: agent.org_id,
+    from_agent_id: agentId,
+    content: `Running task planning for OKRs (${agent.display_name}).`,
+    intent: "working_on",
+  });
 
   const acceptedOKRs = await prisma.oKR.findMany({
     where: { agent_id: agentId, status: { in: ["accepted", "in_progress"] } },
@@ -51,4 +59,16 @@ export async function execute(agentId: string, prisma: PrismaClient): Promise<vo
       });
     }
   }
+
+  await postCoordination(prisma, {
+    org_id: agent.org_id,
+    from_agent_id: agentId,
+    content: `Task planning cycle completed (${agent.display_name}).`,
+    intent: "completed",
+  });
+
+  await prisma.agent.update({
+    where: { id: agentId },
+    data: { last_execution_at: new Date() },
+  });
 }

@@ -6,6 +6,8 @@ export interface BuildContextInput {
   agentDefinition: AgentTypeDefinition;
   contextSnapshot: Record<string, unknown> | null;
   onboardingAnswers?: Record<string, string>;
+  /** Recent updates from other agents (coordination); included in system prompt when set */
+  coordinationSummary?: string;
 }
 
 /**
@@ -13,7 +15,7 @@ export interface BuildContextInput {
  * Framework-agnostic (no Next.js).
  */
 export function buildSystemPrompt(input: BuildContextInput): string {
-  const { companyName, companyContext, agentDefinition, contextSnapshot, onboardingAnswers } =
+  const { companyName, companyContext, agentDefinition, contextSnapshot, onboardingAnswers, coordinationSummary } =
     input;
   const companyContextStr =
     typeof companyContext === "string"
@@ -28,10 +30,14 @@ export function buildSystemPrompt(input: BuildContextInput): string {
       ? JSON.stringify(onboardingAnswers, null, 2)
       : "Not yet provided.";
 
-  return agentDefinition.systemPromptTemplate
+  let out = agentDefinition.systemPromptTemplate
     .replace(/\{\{companyName\}\}/g, companyName)
     .replace(/\{\{companyContext\}\}/g, companyContextStr)
     .replace(/\{\{onboardingAnswers\}\}/g, onboardingStr)
     .replace(/\{\{contextSnapshot\}\}/g, snapshotStr)
     .trim();
+  if (coordinationSummary && coordinationSummary.length > 0) {
+    out += "\n\n" + coordinationSummary;
+  }
+  return out;
 }

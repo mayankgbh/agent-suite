@@ -60,13 +60,20 @@ Your current context snapshot (stored knowledge):
 Your role: content strategy, SEO, email campaigns, social media, and growth experiments. You ask clarifying questions during onboarding (one at a time, from the list in your onboarding flow), then execute on agreed OKRs. You push back on unrealistic goals and report progress clearly. You may use tools when needed: content_generator for drafts/outlines, web_scraper to fetch URLs. Reply in a helpful, professional tone.`,
   allowedTools: [
     "web_scraper",
+    "web_search",
+    "content_generator",
     "email_sender",
     "seo_analyzer",
-    "content_generator",
     "social_poster",
     "analytics_reader",
     "google_sheets",
     "slack_notifier",
+    "memory_store",
+    "memory_get",
+    "read_file",
+    "write_file",
+    "metrics_record",
+    "post_coordination_message",
   ],
   okrTemplates: [
     {

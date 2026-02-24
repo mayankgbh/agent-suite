@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getOrCreateCurrentUser } from "@/lib/auth/clerk";
 import { prisma } from "@/lib/db/client";
 import { updateAgentBodySchema } from "@/lib/agents/validate";
+import { getTierFromBudgetCents } from "@/lib/agent-tier";
 
 async function requireOrgAccess(orgId: string) {
   const { org } = await getOrCreateCurrentUser();
@@ -26,6 +27,9 @@ export async function GET(
         personality_config: true,
         context_snapshot: true,
         system_prompt_override: true,
+        monthly_budget_cents: true,
+        token_usage_current_month: true,
+        token_usage_reset_at: true,
         created_at: true,
         activated_at: true,
         updated_at: true,
@@ -34,7 +38,16 @@ export async function GET(
     if (!agent) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json(agent);
+    const tier = getTierFromBudgetCents(agent.monthly_budget_cents);
+    return NextResponse.json({
+      ...agent,
+      tier: {
+        label: tier.label,
+        model: tier.model,
+        maxTokensPerMonth: tier.maxTokensPerMonth,
+        runsPerDay: tier.runsPerDay,
+      },
+    });
   } catch (e) {
     if (e instanceof Error && e.message === "Forbidden") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -62,6 +75,8 @@ export async function PATCH(
       data.personality_config = body.personality_config as object;
     if (body.system_prompt_override !== undefined)
       data.system_prompt_override = body.system_prompt_override;
+    if (body.monthly_budget_cents !== undefined)
+      data.monthly_budget_cents = body.monthly_budget_cents;
     const agent = await prisma.agent.update({
       where: { id: agentId },
       data,
