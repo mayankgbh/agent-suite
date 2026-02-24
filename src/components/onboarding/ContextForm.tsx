@@ -29,6 +29,7 @@ const INDUSTRIES = [
 export function ContextForm({
   orgId,
   initial,
+  onSuccess,
 }: {
   orgId: string;
   initial: {
@@ -36,6 +37,7 @@ export function ContextForm({
     company_size?: string | null;
     icp_description?: string | null;
   };
+  onSuccess?: () => void;
 }) {
   const router = useRouter();
   const [industry, setIndustry] = useState(initial.industry ?? "");
@@ -56,15 +58,18 @@ export function ContextForm({
           industry: industry || null,
           company_size: companySize || null,
           icp_description: icpDescription || null,
-          onboarding_status: "complete",
         }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? "Failed to save");
       }
-      router.push("/agents");
-      router.refresh();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push("/agents");
+        router.refresh();
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -125,7 +130,7 @@ export function ContextForm({
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" disabled={loading}>
-            {loading ? "Saving…" : "Finish and select agents"}
+            {loading ? "Saving…" : onSuccess ? "Next: connect tools (optional)" : "Finish and select agents"}
           </Button>
         </form>
       </CardContent>

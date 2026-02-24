@@ -7,15 +7,9 @@ interface GoogleSheetsInput {
   values?: unknown[][];
 }
 
-async function getSheetsClient() {
-  const json = process.env.GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON;
-  if (!json) {
-    throw new Error(
-      "GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON is not set. Provide a Google service account JSON (with Sheets scope)."
-    );
-  }
+async function getSheetsClient(serviceAccountJson: string) {
   const { google } = await import("googleapis");
-  const credentials = JSON.parse(json) as {
+  const credentials = JSON.parse(serviceAccountJson) as {
     client_email: string;
     private_key: string;
   };
@@ -45,9 +39,18 @@ export const googleSheetsTool: Tool<GoogleSheetsInput> = {
     },
     required: ["action", "spreadsheet_id", "range"],
   },
-  async execute(input) {
+  async execute(input, context) {
+    const { getToolSheetsCredentials } = await import("@/lib/integrations");
+    const json = await getToolSheetsCredentials(context.orgId);
+    if (!json) {
+      return {
+        content:
+          "Sheets not connected. Connect Google Sheets in Settings → Integrations or set GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON.",
+        error: true,
+      };
+    }
     try {
-      const sheets = await getSheetsClient();
+      const sheets = await getSheetsClient(json);
       if (input.action === "read") {
         const res = await sheets.spreadsheets.values.get({
           spreadsheetId: input.spreadsheet_id,

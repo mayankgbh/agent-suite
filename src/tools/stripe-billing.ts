@@ -24,18 +24,21 @@ export const stripeBillingTool: Tool<StripeBillingInput> = {
     },
     required: ["action"],
   },
-  async execute(input) {
-    const key = process.env.STRIPE_SECRET_KEY;
+  async execute(input, context) {
+    const { getToolCredential } = await import("@/lib/integrations");
+    const key =
+      (await getToolCredential(context.orgId, "billing", "STRIPE_SECRET_KEY")) ||
+      process.env.STRIPE_SECRET_KEY;
     if (!key) {
       return {
         content:
-          "Stripe not connected. Set STRIPE_SECRET_KEY (restricted key with read-only permissions for subscriptions and prices).",
+          "Billing not connected. Connect Stripe in Settings → Integrations or set STRIPE_SECRET_KEY.",
         error: true,
       };
     }
     try {
       const stripe = new Stripe(key, {
-        apiVersion: "2024-06-20",
+        apiVersion: "2026-01-28.clover",
       });
       if (input.action === "list_subscriptions") {
         const limit = Math.min(input.limit ?? 20, 100);

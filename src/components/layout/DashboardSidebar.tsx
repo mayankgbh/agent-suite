@@ -44,6 +44,9 @@ export function DashboardSidebar({
         <Button variant="ghost" className={`justify-start ${pathname.startsWith("/agents") ? "bg-sidebar-accent" : ""}`} asChild>
           <Link href="/agents">Agents</Link>
         </Button>
+        <Button variant="ghost" className={`justify-start ${pathname.startsWith("/settings") ? "bg-sidebar-accent" : ""}`} asChild>
+          <Link href="/settings">Settings</Link>
+        </Button>
       </nav>
       <div className="flex-1 overflow-y-auto px-3">
         <p className="mb-2 px-2 text-xs font-medium text-muted-foreground">YOUR AGENTS</p>

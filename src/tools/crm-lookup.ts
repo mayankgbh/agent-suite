@@ -9,11 +9,11 @@ interface CrmLookupInput {
 async function hubspotSearch(
   objectType: "contacts" | "companies" | "deals",
   query: string,
-  limit: number
+  limit: number,
+  token: string
 ): Promise<string> {
-  const token = process.env.HUBSPOT_API_KEY || process.env.CRM_API_KEY;
   if (!token) {
-    return "CRM not connected. Set HUBSPOT_API_KEY or CRM_API_KEY (HubSpot private app token).";
+    return "CRM not connected. Connect a CRM in Settings → Integrations (e.g. HubSpot) or set HUBSPOT_API_KEY.";
   }
   const url = `https://api.hubapi.com/crm/v3/objects/${objectType}/search`;
   const body = {
@@ -59,7 +59,7 @@ async function hubspotSearch(
 export const crmLookupTool: Tool<CrmLookupInput> = {
   name: "crm_lookup",
   description:
-    "Look up a contact, company, or deal in HubSpot CRM. Use before outreach or to check pipeline. Requires HUBSPOT_API_KEY / CRM_API_KEY (HubSpot private app token).",
+    "Look up a contact, company, or deal in your connected CRM (e.g. HubSpot, Airtable). Use before outreach or to check pipeline. Connect in Settings → Integrations.",
   inputSchema: {
     type: "object",
     properties: {
@@ -69,19 +69,24 @@ export const crmLookupTool: Tool<CrmLookupInput> = {
     },
     required: ["type", "query"],
   },
-  async execute(input) {
+  async execute(input, context) {
+    const { getToolCredential } = await import("@/lib/integrations");
+    const token =
+      (await getToolCredential(context.orgId, "crm", "HUBSPOT_API_KEY")) ||
+      process.env.CRM_API_KEY ||
+      "";
     try {
       const limit = Math.min(input.limit ?? 5, 20);
       if (input.type === "contact") {
-        const content = await hubspotSearch("contacts", input.query, limit);
+        const content = await hubspotSearch("contacts", input.query, limit, token);
         return { content, error: content.startsWith("CRM not connected") };
       }
       if (input.type === "company") {
-        const content = await hubspotSearch("companies", input.query, limit);
+        const content = await hubspotSearch("companies", input.query, limit, token);
         return { content, error: content.startsWith("CRM not connected") };
       }
       if (input.type === "deal") {
-        const content = await hubspotSearch("deals", input.query, limit);
+        const content = await hubspotSearch("deals", input.query, limit, token);
         return { content, error: content.startsWith("CRM not connected") };
       }
       return {

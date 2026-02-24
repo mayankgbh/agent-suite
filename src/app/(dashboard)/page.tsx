@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getOrCreateCurrentUser } from "@/lib/auth/clerk";
 import { prisma } from "@/lib/db/client";
+import { listOrgIntegrations } from "@/lib/integrations";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Megaphone, Target, Zap, BarChart3 } from "lucide-react";
+import { Megaphone, Target, Zap, BarChart3, Plug } from "lucide-react";
 
 const agentIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   marketing: Megaphone,
@@ -30,7 +31,7 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
-  const [agents, tasks, reports, okrCount] = await Promise.all([
+  const [agents, tasks, reports, okrCount, integrationRows] = await Promise.all([
     prisma.agent.findMany({
       where: { org_id: orgId },
       select: { id: true, display_name: true, agent_type: true, status: true },
@@ -46,7 +47,12 @@ export default async function DashboardPage() {
       include: { agent: { select: { id: true, display_name: true, agent_type: true } } },
     }),
     prisma.oKR.count({ where: { org_id: orgId, status: "in_progress" } }),
+    listOrgIntegrations(prisma, orgId),
   ]);
+
+  const connectedByKind = Object.fromEntries(
+    integrationRows.filter((r) => r.provider !== "none").map((r) => [r.kind, r.provider])
+  );
 
   const activeCount = agents.filter((a) => a.status === "active" || a.status === "onboarding").length;
   const weekStart = new Date();
@@ -83,6 +89,24 @@ export default async function DashboardPage() {
       <p className="mt-1 text-muted-foreground">Here&apos;s what your team accomplished today.</p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <p className="text-sm font-medium text-muted-foreground">Integrations</p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <Plug className="size-5 text-muted-foreground" />
+              <Link href="/settings/integrations" className="text-sm font-medium text-primary hover:underline">
+                {Object.keys(connectedByKind).length > 0
+                  ? `${Object.keys(connectedByKind).length} connected`
+                  : "Connect tools"}
+              </Link>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              CRM, calendar, billing, sheets
+            </p>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader className="pb-2">
             <p className="text-sm font-medium text-muted-foreground">Active Agents</p>

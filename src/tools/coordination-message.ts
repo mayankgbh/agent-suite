@@ -25,8 +25,7 @@ export const postCoordinationMessageTool: Tool<PostCoordinationInput> = {
       },
       to_agent_ids: {
         type: "array",
-        items: { type: "string" },
-        description: "Optional: specific agent IDs to notify; omit to notify all",
+        description: "Optional: array of agent IDs to notify; omit to notify all",
       },
     },
     required: ["content"],

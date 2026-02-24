@@ -2,6 +2,15 @@
 
 Use these steps in order. Each step is one concrete action.
 
+**Deploy to production (after initial setup):**
+```bash
+git push origin main
+```
+If Vercel is connected to your repo, it will auto-deploy. Or run:
+```bash
+vercel --prod
+```
+
 ---
 
 ## Step 1: Put the app in Git and push to GitHub

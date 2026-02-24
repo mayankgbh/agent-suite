@@ -22,19 +22,21 @@ export const calendarTool: Tool<CalendarInput> = {
     },
     required: ["action"],
   },
-  async execute(input) {
-    const hasCalendly = Boolean(process.env.CALENDLY_API_KEY);
-    if (!hasCalendly) {
+  async execute(input, context) {
+    const { getToolCredential } = await import("@/lib/integrations");
+    const calendlyKey = await getToolCredential(context.orgId, "calendar", "CALENDLY_API_KEY");
+    const token = calendlyKey || process.env.CALENDLY_API_KEY;
+    if (!token) {
       return {
         content:
-          "Calendar not connected. Set CALENDLY_API_KEY or add a Google Calendar / Calendly MCP server. For now, use memory_store to note meeting requests and ask the user to share their Calendly link.",
+          "Calendar not connected. Connect in Settings → Integrations (Calendly or Google Calendar) or set CALENDLY_API_KEY.",
         error: true,
       };
     }
     try {
       if (input.action === "list_events") {
         const res = await fetch("https://api.calendly.com/scheduled_events?user=https://api.calendly.com/users/me", {
-          headers: { Authorization: `Bearer ${process.env.CALENDLY_API_KEY}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) return { content: `Calendly API ${res.status}`, error: true };
         const data = (await res.json()) as { collection?: Array<{ uri: string; name: string; start_time: string }> };
@@ -45,7 +47,7 @@ export const calendarTool: Tool<CalendarInput> = {
       if (input.action === "check_availability" && input.date) {
         const res = await fetch(
           `https://api.calendly.com/event_type_available_times?event_type=&start_time=${input.date}T00:00:00Z&end_time=${input.date}T23:59:59Z`,
-          { headers: { Authorization: `Bearer ${process.env.CALENDLY_API_KEY}` } }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!res.ok) return { content: "Set CALENDLY_EVENT_TYPE_URI for availability. Or use MCP.", error: true };
         const data = (await res.json()) as { collection?: Array<{ start_time: string }> };

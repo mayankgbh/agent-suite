@@ -26,7 +26,7 @@ For each agent type we list: (1) what a human in that leadership role typically 
 | Notify team | slack_notifier | Webhook. |
 | Remember context | memory_store, memory_get | Per-agent memory. |
 | Store/read metrics | metrics_record, analytics_reader | Internal metric store (not GA/ad platforms). |
-| Spreadsheets | google_sheets | Stub: needs MCP or use write_file for CSV. |
+| Spreadsheets | google_sheets | **Now real:** uses Google Sheets API with `GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON` for read/write. |
 | Coordinate with other agents | post_coordination_message | Broadcast or target updates. |
 
 ### Gaps (Marketing)
@@ -36,7 +36,7 @@ For each agent type we list: (1) what a human in that leadership role typically 
 | No real analytics (GA4, ad platforms) | Can’t report real traffic, conversions, or ROI. | GA4 (or analytics) MCP; or native connector with ANALYTICS_* env. |
 | No paid ads (Google/Meta/LinkedIn) | Can’t create, launch, or optimize campaigns. | MCP for ad platforms or dedicated tools (e.g. create_campaign, get_ad_metrics). |
 | No content calendar / scheduling | Can’t own a real calendar or auto-schedule. | Calendar tool (e.g. Notion/Google Calendar MCP) or native content_calendar (read/write). |
-| Google Sheets read/write | Can’t read from or push to real Sheets (pipelines, reports). | Google Sheets MCP or GOOGLE_SERVICE_ACCOUNT_JSON. |
+| Google Sheets read/write | Can’t read from or push to real Sheets (pipelines, reports). | **Now covered:** `google_sheets` with `GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON`. |
 | No CMS or publish step | Can’t publish to website/CMS. | MCP (Webflow, WordPress, etc.) or publish_to_cms tool. |
 | No keyword/rank tracking | Can’t track SERP positions over time. | Keyword-tracking API or MCP (e.g. SEMrush, Ahrefs). |
 
@@ -63,7 +63,7 @@ For each agent type we list: (1) what a human in that leadership role typically 
 | Check availability / list events | calendar | Calendly (CALENDLY_API_KEY). |
 | Look up CRM | crm_lookup | Stub: needs HubSpot/Salesforce MCP or CRM API. |
 | Store/read metrics | metrics_record, analytics_reader | Internal store (demos, pipeline value, etc.). |
-| Spreadsheets | google_sheets | Stub; write_file for CSV. |
+| Spreadsheets | google_sheets | **Now real:** Google Sheets API with `GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON`. |
 | Remember leads/context | memory_store, memory_get | Per-agent. |
 | Coordinate with other agents | post_coordination_message | E.g. “Demo booked with X”. |
 
@@ -98,7 +98,7 @@ For each agent type we list: (1) what a human in that leadership role typically 
 | List / create GitHub issues | github_list_issues, github_create_issue | GITHUB_TOKEN. |
 | Notify (e.g. deploy, incident) | slack_notifier | Webhook. |
 | Store/read metrics | metrics_record, analytics_reader | Internal (e.g. deploys, bugs). |
-| Spreadsheets | google_sheets | Stub; write_file for CSV. |
+| Spreadsheets | google_sheets | **Now real:** Google Sheets API with `GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON`. |
 | Remember context | memory_store, memory_get | Per-agent. |
 | Read/write files | read_file, write_file | Agent sandbox only (not repo). |
 | Coordinate with other agents | post_coordination_message | E.g. “Shipping X; avoid touching Y”. |
@@ -143,9 +143,9 @@ For each agent type we list: (1) what a human in that leadership role typically 
 
 | Gap | Why it matters | Possible fix |
 |-----|----------------|--------------|
-| No billing/Stripe data | Can’t report real MRR, churn, or revenue. | Stripe MCP or STRIPE_API for subscriptions and revenue. |
+| No billing/Stripe data | Can’t report real MRR, churn, or revenue. | **Now covered (basic):** `stripe_billing` tool (summary + list_subscriptions) with `STRIPE_SECRET_KEY`. |
 | No bank/cash data | Can’t report cash position or runway from real data. | Accounting/bank MCP or read-only API. |
-| No Google Sheets read/write | Can’t read from or push to existing models and reports. | Google Sheets MCP or service account. |
+| No Google Sheets read/write | Can’t read from or push to existing models and reports. | **Now covered:** `google_sheets` with `GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON`. |
 | No structured P&L / forecast | Can’t build or update P&L/forecast. | Spreadsheet MCP + template; or native forecast_read/write. |
 | No data room or doc gen | Can’t assemble or update data room. | Drive/Notion MCP or document assembly tool. |
 

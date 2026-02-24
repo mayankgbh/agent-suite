@@ -128,6 +128,21 @@ model Organization {
   events             Event[]
   agent_files        AgentFile[]
   coordination_messages CoordinationMessage[]
+  org_integrations   OrgIntegration[]
+}
+
+model OrgIntegration {
+  id         String   @id @default(uuid())
+  org_id    String
+  kind      String   // crm | calendar | billing | sheets | analytics
+  provider  String   // hubspot | airtable | calendly | stripe | google_sheets | ga4 | etc.
+  config    Json?    // { api_key?, service_account_json?, ... } — per-provider
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  organization Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  @@unique([org_id, kind])
+  @@index([org_id])
 }
 
 model User {

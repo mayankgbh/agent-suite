@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CompanyUrlForm } from "@/components/onboarding/CompanyUrlForm";
 import { ContextForm } from "@/components/onboarding/ContextForm";
+import { IntegrationsForm } from "@/components/onboarding/IntegrationsForm";
 
 type OrgData = {
   orgId: string;
@@ -28,7 +29,7 @@ type OrgDetails = {
 export default function OnboardingPage() {
   const [current, setCurrent] = useState<OrgData | null>(null);
   const [details, setDetails] = useState<OrgDetails | null>(null);
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,7 +46,11 @@ export default function OnboardingPage() {
         const orgDetails: OrgDetails = await getRes.json();
         if (cancelled) return;
         setDetails(orgDetails);
-        setStep(orgDetails.website_url ? 2 : 1);
+        if (orgDetails.website_url) {
+          setStep(orgDetails.industry || orgDetails.icp_description ? 3 : 2);
+        } else {
+          setStep(1);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -63,6 +68,15 @@ export default function OnboardingPage() {
       setDetails(orgDetails);
       setStep(2);
     }
+  }
+
+  async function finishOnboarding() {
+    if (!current) return;
+    await fetch(`/api/v1/orgs/${current.orgId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ onboarding_status: "complete" as const }),
+    });
   }
 
   if (loading || !current) {
@@ -91,6 +105,14 @@ export default function OnboardingPage() {
             company_size: details.company_size,
             icp_description: details.icp_description,
           }}
+          onSuccess={() => setStep(3)}
+        />
+      )}
+      {step === 3 && current && (
+        <IntegrationsForm
+          orgId={current.orgId}
+          onSkip={finishOnboarding}
+          onContinue={finishOnboarding}
         />
       )}
     </div>
