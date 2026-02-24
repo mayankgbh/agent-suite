@@ -20,7 +20,10 @@ export default async function DashboardLayout({
     if (message.includes("No organization selected")) {
       redirect("/create-organization");
     }
-    redirect("/sign-in");
+    if (message.includes("Unauthorized")) {
+      redirect("/sign-in");
+    }
+    redirect("/error?reason=setup");
   }
 
   const onboardingComplete = org.onboarding_status === "complete";
