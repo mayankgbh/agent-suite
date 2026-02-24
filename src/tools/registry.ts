@@ -15,6 +15,7 @@ import { githubListIssuesTool, githubCreateIssueTool } from "./github";
 import { currencyConvertTool } from "./currency-convert";
 import { calendarTool } from "./calendar";
 import { crmLookupTool } from "./crm-lookup";
+import { stripeBillingTool } from "./stripe-billing";
 import { postCoordinationMessageTool } from "./coordination-message";
 
 const tools: Tool<unknown>[] = [
@@ -37,6 +38,7 @@ const tools: Tool<unknown>[] = [
   currencyConvertTool as Tool<unknown>,
   calendarTool as Tool<unknown>,
   crmLookupTool as Tool<unknown>,
+  stripeBillingTool as Tool<unknown>,
   postCoordinationMessageTool as Tool<unknown>,
 ];
 const byName = new Map(tools.map((t) => [t.name, t]));

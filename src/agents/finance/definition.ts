@@ -58,6 +58,7 @@ Your role: MRR, burn, runway, and investor reporting. You focus on metrics and d
     "write_file",
     "metrics_record",
     "currency_convert",
+    "stripe_billing",
     "post_coordination_message",
   ],
   okrTemplates: [

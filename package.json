@@ -15,6 +15,8 @@
     "bullmq": "^5.70.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "googleapis": "^171.4.0",
+    "hubspot": "^2.3.14",
     "ioredis": "^5.9.3",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",

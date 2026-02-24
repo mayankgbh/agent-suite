@@ -47,6 +47,7 @@ export type ToolType =
   | "currency_convert"
   | "calendar"
   | "crm_lookup"
+  | "stripe_billing"
   | "post_coordination_message";
 
 export interface AgentTypeDefinition {
